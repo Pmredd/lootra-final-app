@@ -1,0 +1,132 @@
+name: Build First Signed AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-first-aab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Check Android project
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "The Gradle wrapper was not found in the repository root."
+            exit 1
+          fi
+
+          chmod +x gradlew
+
+      - name: Remove stale Gradle project cache
+        run: |
+          rm -rf .gradle
+          find . -type d -name build -prune -exec rm -rf {} +
+
+      - name: Check required secrets
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "Missing secret: ANDROID_KEYSTORE_PASSWORD"
+            exit 1
+          fi
+
+          if [ -z "$KEY_ALIAS" ]; then
+            echo "Missing secret: ANDROID_KEY_ALIAS"
+            exit 1
+          fi
+
+          if [ -z "$KEY_PASSWORD" ]; then
+            echo "Missing secret: ANDROID_KEY_PASSWORD"
+            exit 1
+          fi
+
+      - name: Generate upload keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          keytool -genkeypair \
+            -v \
+            -keystore upload-keystore.jks \
+            -storetype JKS \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            -keypass "$KEY_PASSWORD" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Android Upload Key, OU=Mobile Apps, O=App Developer"
+
+      - name: Verify upload keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ ! -s "upload-keystore.jks" ]; then
+            echo "The upload keystore was not generated."
+            exit 1
+          fi
+
+          keytool -list \
+            -keystore upload-keystore.jks \
+            -storepass "$KEYSTORE_PASSWORD"
+
+      - name: Convert keystore to Base64
+        run: |
+          base64 -w 0 upload-keystore.jks > upload-keystore-base64.txt
+
+          if [ ! -s "upload-keystore-base64.txt" ]; then
+            echo "The Base64 file was not generated."
+            exit 1
+          fi
+
+      - name: Export signing path
+        run: |
+          echo "ANDROID_KEYSTORE_PATH=$GITHUB_WORKSPACE/upload-keystore.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed release AAB
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --stacktrace --no-daemon
+
+      - name: Find and verify AAB
+        id: find_aab
+        shell: bash
+        run: |
+          AAB_PATH=$(find . -type f -path "*/build/outputs/bundle/release/*.aab" | head -n 1)
+
+          if [ -z "$AAB_PATH" ]; then
+            echo "No release AAB was found."
+            exit 1
+          fi
+
+          echo "AAB generated successfully:"
+          ls -lh "$AAB_PATH"
+
+          echo "aab_path=$AAB_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload first signed AAB package
+        uses: actions/upload-artifact@v4
+        with:
+          name: First-Signed-AAB-Package
+          path: |
+            ${{ steps.find_aab.outputs.aab_path }}
+            upload-keystore.jks
+            upload-keystore-base64.txt
+          if-no-files-found: error
+          retention-days: 1
