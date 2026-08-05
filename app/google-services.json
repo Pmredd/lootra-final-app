@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "48840692419",
+    "project_id": "lootra-ceca6",
+    "storage_bucket": "lootra-ceca6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:48840692419:android:e99a14aec942fdcbc5c876",
+        "android_client_info": {
+          "package_name": "com.aistudio.lootra.wellbeing.vfrgh"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "48840692419-o6hds512h7v0srg80bskcqep832quktv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBafoAFCiWMmK575WIR8iB8n9F6pCVwFcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "48840692419-o6hds512h7v0srg80bskcqep832quktv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

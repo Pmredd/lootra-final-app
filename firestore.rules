@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function getAdminData() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+             getAdminData().isActive == true;
+    }
+
+    function isSuperAdmin() {
+      return isAdmin() && getAdminData().role == "super_admin";
+    }
+
+    function isSubAdmin() {
+      return isAdmin() && getAdminData().role == "sub_admin";
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- Admins Collection ---
+    match /admins/{userId} {
+      allow read: if request.auth != null && (isOwner(userId) || isSuperAdmin());
+      allow write: if isSuperAdmin();
+    }
+
+    // --- Users Profiles (users) ---
+    match /users/{userId} {
+      allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+
+      match /watched_reels/{reelId} {
+        allow read, delete: if isOwner(userId) || isSuperAdmin();
+        allow create: if isOwner(userId) && request.resource.data.uid == userId;
+        allow update: if isSuperAdmin();
+      }
+
+      match /liked_reels/{reelId} {
+        allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+      }
+    }
+
+    // --- Wallet (wallet) ---
+    match /wallet/{userId} {
+      allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+    }
+
+    // --- E-Commerce Transactions ---
+    match /transactions/{userId} {
+      allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+
+      match /history/{transactionId} {
+        allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+      }
+    }
+
+    // --- Rewards Summaries and Daily Logs (rewards) ---
+    match /rewards/{userId} {
+      allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+
+      match /daily_rewards/{rewardId} {
+        allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+      }
+    }
+
+    // --- User Daily State / Digital Wellbeing Usage ---
+    match /user_daily_state/{userId} {
+      allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+
+      match /days/{dayId} {
+        allow read, write, delete: if isOwner(userId) || isSuperAdmin();
+      }
+    }
+
+    // --- Products Inventory (products) ---
+    match /products/{productId} {
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin();
+    }
+
+    // --- Colleges / Campuses / Locations ---
+    match /colleges/{collegeId} {
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin();
+    }
+
+    // --- Pickup Locations ---
+    match /pickup_locations/{locationId} {
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin();
+    }
+
+    // --- Legal Pages (legal_pages) ---
+    match /legal_pages/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // --- E-Commerce Orders (orders) ---
+    match /orders/{orderId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if isSuperAdmin() || 
+                     (isSubAdmin() && (resource.data.collegeId == getAdminData().collegeId || resource.data.selectedCollegeId == getAdminData().collegeId)) || 
+                     (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if isSuperAdmin() || 
+                       (isSubAdmin() && (resource.data.collegeId == getAdminData().collegeId || resource.data.selectedCollegeId == getAdminData().collegeId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderStatus', 'assignedSubAdmin'])) || 
+                       (request.auth != null && resource.data.uid == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cancelRequest']) && request.resource.data.cancelRequest == true);
+      allow delete: if isSuperAdmin() || (request.auth != null && resource.data.uid == request.auth.uid);
+    }
+
+    // --- Daily Reports ---
+    match /daily_reports/{reportId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read, update: if isSuperAdmin() || (resource != null && resource.data.uid == request.auth.uid);
+      allow delete: if isSuperAdmin() || (request.auth != null && resource != null && resource.data.uid == request.auth.uid);
+    }
+
+    // --- Monthly Reports ---
+    match /monthly_reports/{reportId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read, update: if isSuperAdmin() || (resource != null && resource.data.uid == request.auth.uid);
+      allow delete: if isSuperAdmin() || (request.auth != null && resource != null && resource.data.uid == request.auth.uid);
+    }
+
+    // --- Device Bindings ---
+    match /device_bindings/{deviceId} {
+      allow read, write: if true;
+    }
+
+    // --- Blocked Attempts ---
+    match /blocked_attempts/{attemptId} {
+      allow read: if isAdmin();
+      allow write: if true;
+    }
+
+    // --- Reels TV (reels) ---
+    match /reels/{reelId} {
+      allow read: if request.auth != null && (isSuperAdmin() || resource.data.status == "Active");
+      allow create, delete: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes']));
+    }
+
+    // --- Watched Reels (root-level fallback) ---
+    match /watched_reels/{docId} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isSuperAdmin());
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSuperAdmin() || (request.auth != null && resource != null && (resource.data.uid == request.auth.uid || resource.data.userId == request.auth.uid));
+      allow update: if isSuperAdmin();
+    }
+
+    // --- Liked Reels (root-level fallback) ---
+    match /liked_reels/{docId} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isSuperAdmin());
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow delete: if isSuperAdmin() || (request.auth != null && resource != null && (resource.data.uid == request.auth.uid || resource.data.userId == request.auth.uid));
+      allow update: if isSuperAdmin();
+    }
+
+    // --- System Settings ---
+    match /settings/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isSuperAdmin();
+    }
+
+    // --- Promotion Plans ---
+    match /promotion_plans/{planId} {
+      allow read, write: if true;
+    }
+
+    // --- General Fallback Security Rule ---
+    match /{document=**} {
+      allow read, write: if request.auth != null && isSuperAdmin();
+    }
+  }
+}
