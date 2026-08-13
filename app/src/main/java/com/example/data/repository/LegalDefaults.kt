@@ -234,6 +234,40 @@ object LegalDefaults {
                 """.trimIndent()
             )
 
+            "delete_account" -> LegalPageEntity(
+                docId = "delete_account",
+                title = "Delete Account",
+                summary = "Information and steps for permanently deleting your Lootra account, data, wallet, and settings.",
+                version = "1.0.0",
+                status = "published",
+                published = true,
+                updatedAt = System.currentTimeMillis(),
+                updatedBy = "Lootra Privacy Team",
+                content = """
+                    LOOTRA ACCOUNT DELETION POLICY
+                    Effective Date: July 2026 | Version: 1.0.0
+
+                    1. ACCOUNT DELETION OVERVIEW
+                    You have the right to request the permanent deletion of your Lootra account and all associated personal data at any time.
+
+                    2. WHAT DATA IS REMOVED
+                    Upon account deletion, the following data will be permanently purged:
+                    • Profile credentials and personal information.
+                    • Lootra wallet history, coins balance, and redemption vouchers.
+                    • Digital wellbeing history and usage logs.
+                    • Uploaded reels, comments, and interactions.
+
+                    3. HOW TO DELETE YOUR ACCOUNT IN-APP
+                    You can initiate account deletion directly inside Lootra:
+                    1. Go to Profile Screen.
+                    2. Scroll to the bottom and select "Delete Account".
+                    3. Confirm deletion via re-authentication.
+
+                    4. EXTERNAL DELETION REQUESTS
+                    You may also submit a deletion request online at https://lootra-official-website.ai.studio/#delete-account or via email at lootra143@gmail.com.
+                """.trimIndent()
+            )
+
             else -> LegalPageEntity(docId = docId, title = docId.replace("_", " ").uppercase())
         }
     }
@@ -241,6 +275,7 @@ object LegalDefaults {
     val ALL_DOC_IDS = listOf(
         "privacy_policy",
         "terms_conditions",
+        "delete_account",
         "community_guidelines",
         "about_lootra",
         "help_support",

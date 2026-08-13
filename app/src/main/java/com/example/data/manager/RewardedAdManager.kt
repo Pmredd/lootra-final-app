@@ -40,7 +40,7 @@ class RewardedAdManager(
     override val loadError: StateFlow<String?> = _loadError.asStateFlow()
 
     private var rewardedAd: RewardedAd? = null
-    private val productionAdUnitId = "ca-app-pub-3940256099942544/5224354917" // Temporarily switched to AdMob Test Ad Unit ID
+    private val productionAdUnitId = "ca-app-pub-7517042272316969/9970193668" // Production AdMob Rewarded Ad Unit ID
 
     private val managerScope = CoroutineScope(Dispatchers.Default)
 

@@ -126,6 +126,7 @@ class WellbeingForegroundService : Service() {
                         }
                     }
                 } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
                     Log.e("WellbeingFGS", "Error in tracking loop iteration: ${e.message}")
                 }
 
