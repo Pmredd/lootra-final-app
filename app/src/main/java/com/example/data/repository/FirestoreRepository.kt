@@ -63,6 +63,7 @@ class FirestoreRepositoryImpl(
                 Result.success(null)
             }
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.e("FirestoreRepository", "Failed to get user profile for $uid", e)
             Result.failure(e)
         }
@@ -116,7 +117,7 @@ class FirestoreRepositoryImpl(
             )
             val success = kotlinx.coroutines.withTimeoutOrNull(10000) {
                 db.collection("daily_reports")
-                    .document(report.date)
+                    .document("${currentUid}_${report.date}")
                     .set(data)
                     .await()
                 true
@@ -147,7 +148,7 @@ class FirestoreRepositoryImpl(
             )
             val success = kotlinx.coroutines.withTimeoutOrNull(10000) {
                 db.collection("monthly_reports")
-                    .document(report.monthKey)
+                    .document("${currentUid}_${report.monthKey}")
                     .set(data)
                     .await()
                 true

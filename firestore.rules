@@ -27,7 +27,7 @@ service cloud.firestore {
 
     // --- Admins Collection ---
     match /admins/{userId} {
-      allow read: if request.auth != null && (isOwner(userId) || isSuperAdmin());
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
@@ -80,19 +80,19 @@ service cloud.firestore {
 
     // --- Products Inventory (products) ---
     match /products/{productId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
     // --- Colleges / Campuses / Locations ---
     match /colleges/{collegeId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
     // --- Pickup Locations ---
     match /pickup_locations/{locationId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
@@ -116,16 +116,16 @@ service cloud.firestore {
 
     // --- Daily Reports ---
     match /daily_reports/{reportId} {
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow read, update: if isSuperAdmin() || (resource != null && resource.data.uid == request.auth.uid);
-      allow delete: if isSuperAdmin() || (request.auth != null && resource != null && resource.data.uid == request.auth.uid);
+      allow create, update: if request.auth != null && (request.resource.data.uid == request.auth.uid || isSuperAdmin());
+      allow read: if request.auth != null && (resource == null || resource.data.uid == request.auth.uid || isSuperAdmin());
+      allow delete: if request.auth != null && (isSuperAdmin() || (resource != null && resource.data.uid == request.auth.uid));
     }
 
     // --- Monthly Reports ---
     match /monthly_reports/{reportId} {
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow read, update: if isSuperAdmin() || (resource != null && resource.data.uid == request.auth.uid);
-      allow delete: if isSuperAdmin() || (request.auth != null && resource != null && resource.data.uid == request.auth.uid);
+      allow create, update: if request.auth != null && (request.resource.data.uid == request.auth.uid || isSuperAdmin());
+      allow read: if request.auth != null && (resource == null || resource.data.uid == request.auth.uid || isSuperAdmin());
+      allow delete: if request.auth != null && (isSuperAdmin() || (resource != null && resource.data.uid == request.auth.uid));
     }
 
     // --- Device Bindings ---
@@ -141,9 +141,9 @@ service cloud.firestore {
 
     // --- Reels TV (reels) ---
     match /reels/{reelId} {
-      allow read: if request.auth != null && (isSuperAdmin() || resource.data.status == "Active");
+      allow read: if true;
       allow create, delete: if isSuperAdmin();
-      allow update: if isSuperAdmin() || (request.auth != null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes']));
+      allow update: if isSuperAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes']);
     }
 
     // --- Watched Reels (root-level fallback) ---
@@ -164,7 +164,13 @@ service cloud.firestore {
 
     // --- System Settings ---
     match /settings/{docId} {
-      allow read: if request.auth != null;
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+
+    // --- App Control ---
+    match /app_control/{docId} {
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
