@@ -290,7 +290,6 @@ class RewardRepository(
                 false
             }
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.e("RewardRepository", "Firestore reward sync failed: ${e.message}")
             false
         }
@@ -305,7 +304,6 @@ class RewardRepository(
                 }
             }
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.e("RewardRepository", "Error syncing unsynced rewards: ${e.message}")
         }
     }
