@@ -40,6 +40,7 @@ firebaseBom = "34.12.0"
 secretsGradlePlugin = "2.0.1"
 cloudinaryAndroid = "2.4.0"
 media3 = "1.4.1"
+soloader = "0.10.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -92,6 +93,7 @@ androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplaye
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
 cloudinary-android = { group = "com.cloudinary", name = "cloudinary-android", version.ref = "cloudinaryAndroid" }
+soloader = { group = "com.facebook.soloader", name = "soloader", version.ref = "soloader" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
