@@ -102,6 +102,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation("androidx.work:work-runtime-ktx:2.9.1")
   implementation(libs.cloudinary.android)
+  implementation(libs.soloader)
   implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   // implementation(libs.firebase.ai)
